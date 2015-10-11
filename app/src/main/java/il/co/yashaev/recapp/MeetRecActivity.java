@@ -7,7 +7,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.software.shell.fab.ActionButton;
 
@@ -24,9 +23,13 @@ public class MeetRecActivity extends AppCompatActivity {
     private RecordAdapter recordAdapter;
     private ActionButton meetingFab;
     private ActionButton recordFab;
+    protected final String DUMMY_MEETING_TITLE = "Meeting ";
+    protected final String DUMMY_RECORD_TITLE = "Record title ";
+    protected final String DUMMY_RECORD_DESCRIPTION = "Record description ";
 
-    private int meetingCnt = 1;
-    private int recordCnt = 1;
+
+    protected int meetingCnt = 1;
+    protected int recordCnt = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +51,7 @@ public class MeetRecActivity extends AppCompatActivity {
         meetingFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                meetingAdapter.data.add("Meeting fab "+ meetingCnt++);
+                meetingAdapter.data.add(DUMMY_MEETING_TITLE + meetingCnt++);
                 meetingAdapter.notifyItemRangeChanged(0, meetingAdapter.getItemCount());
                 meetingList.scrollToPosition(meetingAdapter.getItemCount()-1);
             }
@@ -57,8 +60,8 @@ public class MeetRecActivity extends AppCompatActivity {
         recordFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                recordAdapter.titles.add("Record title " + recordCnt);
-                recordAdapter.descriptions.add("Description " + recordCnt);
+                recordAdapter.titles.add(DUMMY_RECORD_TITLE + recordCnt);
+                recordAdapter.descriptions.add(DUMMY_RECORD_DESCRIPTION + recordCnt);
                 recordCnt++;
                 recordAdapter.notifyItemRangeChanged(0, recordAdapter.getItemCount());
                 recordList.scrollToPosition(recordAdapter.getItemCount()-1);

@@ -9,8 +9,8 @@
         android:layout_width="66dp"
         android:layout_height="66dp"
         android:layout_gravity="center_vertical"
-        android:src="@drawable/dog" />
-        <!--android:padding="8dp"-->
+        android:padding="8dp"
+        android:src="@drawable/handshake" />
 
     <TextView
         android:id="@+id/meetingTitle"
@@ -20,5 +20,16 @@
         android:padding="8dp"
         android:textAppearance="@android:style/TextAppearance.Large"
         android:text="Dummy Text" />
+
+    <EditText
+        android:id="@+id/editTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:padding="8dp"
+        android:hint="set meeting title"
+        android:visibility="gone"
+        android:inputType="textCapSentences"
+        />
 
 </LinearLayout>

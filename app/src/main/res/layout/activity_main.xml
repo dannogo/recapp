@@ -9,12 +9,15 @@
     android:weightSum="2"
     tools:context=".MainActivity">
 
-
-    <Button
-        android:id="@+id/btn"
-        android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:text="GO!"
+    <ImageButton
+        android:id="@+id/logo"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:scaleType="centerInside"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:src="@drawable/rabbit"
+        android:background="@null"
         />
 
 

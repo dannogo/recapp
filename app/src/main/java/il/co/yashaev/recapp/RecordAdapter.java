@@ -85,8 +85,12 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                         || (actionId == EditorInfo.IME_ACTION_DONE)) {
                     String editTextContent = holder.editDescription.getText().toString();
                     if (!editTextContent.isEmpty()) {
-                        holder.description.setText(editTextContent);
-                        descriptions.set(position, editTextContent);
+                        int currentID = Integer.parseInt(holder.databaseID.getText().toString());
+                        int res = ((MeetRecActivity)context).databaseAdapter.updateRecord(null, editTextContent, currentID);
+                        if (res == 1) {
+                            holder.description.setText(editTextContent);
+                            descriptions.set(position, editTextContent);
+                        }
                     }
                     holder.editDescription.setVisibility(View.GONE);
                     holder.description.setVisibility(View.VISIBLE);

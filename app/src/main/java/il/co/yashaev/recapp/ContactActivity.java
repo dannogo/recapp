@@ -1,16 +1,16 @@
 package il.co.yashaev.recapp;
 
-import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Toast;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.software.shell.fab.ActionButton;
 
@@ -26,7 +26,9 @@ public class ContactActivity extends AppCompatActivity {
     private ActionButton contactFab;
     protected final String DUMMY_NAME = "Name fab ";
     protected final String DUMMY_DESCRIPTION = "Description fab ";
-
+    DatabaseAdapter databaseAdapter;
+    private ImageView logo;
+    private RelativeLayout contentLayout;
     private int contactCnt = 1;
 
     @Override
@@ -34,27 +36,64 @@ public class ContactActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.contact_activity);
 
+        databaseAdapter = new DatabaseAdapter(this);
+
         contactList = (RecyclerView) findViewById(R.id.contactList);
         contactFab = (ActionButton) findViewById(R.id.contactFab);
+        logo = (ImageView) findViewById(R.id.logo);
+        contentLayout = (RelativeLayout) findViewById(R.id.contentLayout);
+
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+                logo.setVisibility(View.GONE);
+                contentLayout.setVisibility(View.VISIBLE);
+            }
+        }, 1000);
 
         ArrayList<String> names = new ArrayList<>();
         ArrayList<String> descriptions = new ArrayList<>();
+        ArrayList<Integer> ids = new ArrayList<>();
+
+        ArrayList<String[]> contacts = databaseAdapter.getContactsData();
+        for (int i=0; i<contacts.size(); i++){
+            ids.add(Integer.parseInt(contacts.get(i)[0]));
+            if(contacts.get(i)[1] == null) {
+                names.add(DUMMY_NAME+contactCnt);
+            }else{
+                names.add(contacts.get(i)[1]);
+            }
+
+            if(contacts.get(i)[2] == null) {
+                descriptions.add(DUMMY_DESCRIPTION+contactCnt);
+            }else{
+                descriptions.add(contacts.get(i)[2]);
+            }
+            contactCnt++;
+        }
 
         contactFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                contactAdapter.names.add(DUMMY_NAME+contactCnt);
-                contactAdapter.descriptions.add(DUMMY_DESCRIPTION+contactCnt);
-                contactCnt++;
-                contactAdapter.notifyItemRangeChanged(0, contactAdapter.getItemCount());
-                contactList.scrollToPosition(contactAdapter.getItemCount()-1);
+                int id = databaseAdapter.insertDummyContact();
+                if (id >= 0) {
+                    contactAdapter.names.add(DUMMY_NAME + contactCnt);
+                    contactAdapter.descriptions.add(DUMMY_DESCRIPTION + contactCnt);
+                    contactAdapter.ids.add(id);
+                    contactCnt++;
+                    contactAdapter.notifyItemRangeChanged(0, contactAdapter.getItemCount());
+                    contactList.scrollToPosition(contactAdapter.getItemCount() - 1);
+                }
             }
         });
 
-        contactAdapter = new ContactAdapter(ContactActivity.this, names, descriptions);
+        contactAdapter = new ContactAdapter(ContactActivity.this, names, descriptions, ids);
 
         contactList.setAdapter(contactAdapter);
         contactList.setLayoutManager(new LinearLayoutManager(ContactActivity.this));
+
 
     }
 
@@ -78,7 +117,6 @@ public class ContactActivity extends AppCompatActivity {
 
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }

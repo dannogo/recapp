@@ -23,18 +23,22 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
     private LayoutInflater inflater;
     ArrayList<String> titles;
     ArrayList<String> descriptions;
+    protected ArrayList<Integer> ids;
     Context context;
 
-    public RecordAdapter(Context context, ArrayList<String> titles, ArrayList<String> descriptions){
+    public RecordAdapter(Context context, ArrayList<String> titles, ArrayList<String> descriptions,  ArrayList<Integer> ids){
         inflater = LayoutInflater.from(context);
-
         this.titles = new ArrayList<>(titles);
         this.descriptions = new ArrayList<>(descriptions);
+        this.ids = new ArrayList<>(ids);
+        this.context = context;
+
         if (this.titles.isEmpty() && this.descriptions.isEmpty()){
             this.titles.add(((MeetRecActivity)context).DUMMY_RECORD_TITLE + ((MeetRecActivity)context).recordCnt);
             this.descriptions.add(((MeetRecActivity)context).DUMMY_RECORD_DESCRIPTION + ((MeetRecActivity)context).recordCnt++);
+            int id = ((MeetRecActivity)this.context).databaseAdapter.insertDummyRecord(((MeetRecActivity)this.context).meetingID);
+            this.ids.add(id);
         }
-        this.context = context;
     }
 
     @Override
@@ -51,6 +55,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         holder.icon.setImageResource(R.drawable.microphone);
         holder.title.setText(titles.get(position));
         holder.description.setText(descriptions.get(position));
+        holder.databaseID.setText(String.valueOf(ids.get(position)));
 
         holder.editTitle.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -59,8 +64,12 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                         || (actionId == EditorInfo.IME_ACTION_DONE)) {
                     String editTextContent = holder.editTitle.getText().toString();
                     if (!editTextContent.isEmpty()) {
-                        holder.title.setText(editTextContent);
-                        titles.set(position, editTextContent);
+                        int currentID = Integer.parseInt(holder.databaseID.getText().toString());
+                        int res = ((MeetRecActivity)context).databaseAdapter.updateRecord(editTextContent, null, currentID);
+                        if (res == 1) {
+                            holder.title.setText(editTextContent);
+                            titles.set(position, editTextContent);
+                        }
                     }
                     holder.editTitle.setVisibility(View.GONE);
                     holder.title.setVisibility(View.VISIBLE);
@@ -100,6 +109,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         EditText editTitle;
         TextView description;
         EditText editDescription;
+        private TextView databaseID;
         private InputMethodManager imm;
 
         public RecordViewHloder(View itemView, Context context) {
@@ -109,6 +119,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
             editTitle = (EditText) itemView.findViewById(R.id.editTitle);
             description = (TextView) itemView.findViewById(R.id.recordDescription);
             editDescription = (EditText) itemView.findViewById(R.id.editDescription);
+            databaseID = (TextView) itemView.findViewById(R.id.databaseRecordID);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -161,6 +172,13 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                 if(imm != null){
                     imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
                 }
+
+                if (title.getText().toString().startsWith(((MeetRecActivity)context).DUMMY_RECORD_TITLE)){
+                    editTitle.setText("");
+                }else{
+                    editTitle.setText(title.getText());
+                }
+
                 if (!editTitle.getText().toString().isEmpty()){
                     editTitle.setSelection(editTitle.getText().length());
                 }
@@ -171,6 +189,12 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                 editDescription.requestFocus();
                 if(imm != null){
                     imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                }
+
+                if (description.getText().toString().startsWith(((MeetRecActivity)context).DUMMY_RECORD_DESCRIPTION)){
+                    editDescription.setText("");
+                }else{
+                    editDescription.setText(description.getText());
                 }
 
                 if (!editDescription.getText().toString().isEmpty()){

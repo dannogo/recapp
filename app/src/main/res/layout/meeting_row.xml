@@ -4,6 +4,14 @@
     android:layout_height="match_parent"
     android:orientation="horizontal">
 
+    <TextView
+        android:id="@+id/databaseMeetingID"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="undefined"
+        />
+
     <ImageView
         android:id="@+id/meetingIcon"
         android:layout_width="66dp"
@@ -27,7 +35,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:padding="8dp"
-        android:hint="set meeting title"
+        android:hint="Set meeting title"
         android:visibility="gone"
         android:inputType="textCapSentences"
         />

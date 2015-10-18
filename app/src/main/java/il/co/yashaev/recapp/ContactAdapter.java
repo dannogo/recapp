@@ -13,6 +13,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 
 /**
@@ -21,14 +23,16 @@ import java.util.ArrayList;
 public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactViewHolder> {
 
     private LayoutInflater inflater;
-    ArrayList<String> names = new ArrayList<>();
-    ArrayList<String> descriptions = new ArrayList<>();
+    protected ArrayList<String> names = new ArrayList<>();
+    protected ArrayList<String> descriptions = new ArrayList<>();
+    protected ArrayList<Integer> ids = new ArrayList<>();
     Context context;
 
-    public ContactAdapter(Context context, ArrayList<String> names, ArrayList<String> descriptions){
+    public ContactAdapter(Context context, ArrayList<String> names, ArrayList<String> descriptions, ArrayList<Integer> ids){
         inflater = LayoutInflater.from(context);
         this.names = new ArrayList<>(names);
         this.descriptions = new ArrayList<>(descriptions);
+        this.ids = new ArrayList<>(ids);
         this.context = context;
     }
 
@@ -46,6 +50,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         holder.icon.setImageResource(R.drawable.contact);
         holder.name.setText(names.get(position));
         holder.description.setText(descriptions.get(position));
+        holder.databaseID.setText(String.valueOf(ids.get(position)));
 
 
         holder.editName.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -55,8 +60,12 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
                         || (actionId == EditorInfo.IME_ACTION_DONE)) {
                     String editTextContent = holder.editName.getText().toString();
                     if (!editTextContent.isEmpty()) {
-                        holder.name.setText(editTextContent);
-                        names.set(position, editTextContent);
+                        int currentID = Integer.parseInt(holder.databaseID.getText().toString());
+                        int res = ((ContactActivity) context).databaseAdapter.updateContact(editTextContent, null, currentID);
+                        if (res == 1) {
+                            holder.name.setText(editTextContent);
+                            names.set(position, editTextContent);
+                        }
                     }
                     holder.editName.setVisibility(View.GONE);
                     holder.name.setVisibility(View.VISIBLE);
@@ -72,8 +81,12 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
                         || (actionId == EditorInfo.IME_ACTION_DONE)) {
                     String editTextContent = holder.editDescription.getText().toString();
                     if (!editTextContent.isEmpty()) {
-                        holder.description.setText(editTextContent);
-                        descriptions.set(position, editTextContent);
+                        int currentID = Integer.parseInt(holder.databaseID.getText().toString());
+                        int res = ((ContactActivity) context).databaseAdapter.updateContact(null, editTextContent, currentID);
+                        if(res == 1) {
+                            holder.description.setText(editTextContent);
+                            descriptions.set(position, editTextContent);
+                        }
                     }
                     holder.editDescription.setVisibility(View.GONE);
                     holder.description.setVisibility(View.VISIBLE);
@@ -97,6 +110,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         private EditText editName;
         private TextView description;
         private EditText editDescription;
+        private TextView databaseID;
         private InputMethodManager imm;
 
 
@@ -108,6 +122,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
             editName = (EditText) itemView.findViewById(R.id.editName);
             description = (TextView) itemView.findViewById(R.id.contactDescription);
             editDescription = (EditText) itemView.findViewById(R.id.editDescription);
+            databaseID = (TextView) itemView.findViewById(R.id.databaseID);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -148,6 +163,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         @Override
         public void onClick(View v) {
             Intent intent = new Intent(context , MeetRecActivity.class);
+            intent.putExtra("contactID", Integer.parseInt(databaseID.getText().toString()));
             context.startActivity(intent);
         }
 
@@ -161,6 +177,13 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
                 if(imm != null){
                     imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
                 }
+
+                if (name.getText().toString().startsWith(((ContactActivity)context).DUMMY_NAME)){
+                    editName.setText("");
+                }else{
+                    editName.setText(name.getText());
+                }
+
                 if (!editName.getText().toString().isEmpty()){
                     editName.setSelection(editName.getText().length());
                 }
@@ -171,6 +194,12 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
                 editDescription.requestFocus();
                 if(imm != null){
                     imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                }
+
+                if (description.getText().toString().startsWith(((ContactActivity)context).DUMMY_DESCRIPTION)){
+                    editDescription.setText("");
+                }else{
+                    editDescription.setText(description.getText());
                 }
 
                 if (!editDescription.getText().toString().isEmpty()){

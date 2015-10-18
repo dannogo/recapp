@@ -1,6 +1,8 @@
 package il.co.yashaev.recapp;
 
 import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -11,9 +13,11 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+
 
 /**
  * Created by oleh on 10/5/15.
@@ -21,18 +25,23 @@ import java.util.ArrayList;
 public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingViewHolder> {
 
     private LayoutInflater inflater;
-    ArrayList<String> data = new ArrayList<>();
-    Context context;
+    protected ArrayList<String> data = new ArrayList<>();
+    protected ArrayList<Integer> ids = new ArrayList<>();
+    private Context context;
+    protected int checkedMeeting = -1;
 
 
-    public MeetingAdapter(Context context, ArrayList<String> data){
+    public MeetingAdapter(Context context, ArrayList<String> data, ArrayList<Integer> ids){
         inflater = LayoutInflater.from(context);
 
         this.data = new ArrayList<>(data);
-        if (this.data.isEmpty()){
-            this.data.add(((MeetRecActivity)context).DUMMY_MEETING_TITLE + ((MeetRecActivity)context).meetingCnt++);
-        }
+        this.ids = new ArrayList<>(ids);
         this.context = context;
+        if (this.data.isEmpty()){
+            this.data.add(((MeetRecActivity) this.context).DUMMY_MEETING_TITLE + ((MeetRecActivity) this.context).meetingCnt++);
+            int id = ((MeetRecActivity)this.context).databaseAdapter.insertDummyMeeting(((MeetRecActivity)this.context).contactID);
+            this.ids.add(id);
+        }
 
     }
 
@@ -49,6 +58,15 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
     public void onBindViewHolder(final MeetingViewHolder holder, final int position) {
         holder.icon.setImageResource(R.drawable.handshake);
         holder.title.setText(data.get(position));
+        holder.databaseID.setText(String.valueOf(ids.get(position)));
+
+        if (position == checkedMeeting){
+            ((LinearLayout)holder.title.getParent()).setBackgroundColor(context.getResources().getColor(R.color.checkedItem));
+//            Log.e("LOG", ""+position);
+        }else{
+            ((LinearLayout)holder.title.getParent()).setBackgroundColor(context.getResources().getColor(R.color.uncheckedItem));
+//            ((LinearLayout)holder.title.getParent()).setBackgroundColor(Color.parseColor("#FAFAFA"));
+        }
 
         holder.editTitle.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -57,8 +75,12 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
                         || (actionId == EditorInfo.IME_ACTION_DONE)) {
                     String editTextContent = holder.editTitle.getText().toString();
                     if (!editTextContent.isEmpty()) {
-                        holder.title.setText(editTextContent);
-                        data.set(position, editTextContent);
+                        int currentID = Integer.parseInt(holder.databaseID.getText().toString());
+                        int res = ((MeetRecActivity)context).databaseAdapter.updateMeeting(editTextContent, currentID);
+                        if (res == 1) {
+                            holder.title.setText(editTextContent);
+                            data.set(position, editTextContent);
+                        }
                     }
                     holder.editTitle.setVisibility(View.GONE);
                     holder.title.setVisibility(View.VISIBLE);
@@ -79,6 +101,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
         ImageView icon;
         TextView title;
         EditText editTitle;
+        TextView databaseID;
         private InputMethodManager imm;
 
         public MeetingViewHolder(View itemView, Context context) {
@@ -86,6 +109,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
             icon = (ImageView) itemView.findViewById(R.id.meetingIcon);
             title = (TextView) itemView.findViewById(R.id.meetingTitle);
             editTitle = (EditText) itemView.findViewById(R.id.editTitle);
+            databaseID = (TextView) itemView.findViewById(R.id.databaseMeetingID);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -110,7 +134,15 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
 
         @Override
         public void onClick(View v) {
-            Log.w("LOG", "CLICK");
+            checkedMeeting = getPosition();
+            ((MeetRecActivity)context).uncheckSpareItems();
+            itemView.setBackgroundColor(context.getResources().getColor(R.color.checkedItem));
+
+            int meetID = Integer.parseInt(databaseID.getText().toString());
+            ((MeetRecActivity)context).meetingID = meetID;
+            ((MeetRecActivity)context).showRecords(meetID);
+
+
         }
 
         @Override
@@ -122,6 +154,12 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
                 editTitle.requestFocus();
                 if(imm != null){
                     imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+                }
+
+                if (title.getText().toString().startsWith(((MeetRecActivity)context).DUMMY_MEETING_TITLE)){
+                    editTitle.setText("");
+                }else{
+                    editTitle.setText(title.getText());
                 }
 
                 if (!editTitle.getText().toString().isEmpty()){

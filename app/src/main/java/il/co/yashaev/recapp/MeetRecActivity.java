@@ -8,6 +8,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.software.shell.fab.ActionButton;
@@ -25,10 +27,12 @@ public class MeetRecActivity extends AppCompatActivity {
     protected RecordAdapter recordAdapter;
     private ActionButton meetingFab;
     private ActionButton recordFab;
-    protected final String DUMMY_MEETING_TITLE = "Meeting ";
+    private RelativeLayout recordContent;
+    protected LinearLayout player;
+    protected final String DUMMY_MEETING_TITLE = "Meeting title ";
     protected final String DUMMY_RECORD_TITLE = "Record title ";
     protected final String DUMMY_RECORD_DESCRIPTION = "Record description ";
-    DatabaseAdapter databaseAdapter;
+    protected DatabaseAdapter databaseAdapter;
     protected int contactID = -1;
     protected int meetingID = -1;
 
@@ -37,7 +41,7 @@ public class MeetRecActivity extends AppCompatActivity {
     private ArrayList<Integer> recordIDs = new ArrayList<>();
 
     protected int meetingCnt = 1;
-    protected int recordCnt = 1;
+    protected String contactsName = "Undefined";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,8 +50,13 @@ public class MeetRecActivity extends AppCompatActivity {
 
         meetingList = (RecyclerView) findViewById(R.id.meetingList);
         recordList = (RecyclerView) findViewById(R.id.recordList);
+        meetingList.addItemDecoration(new DividerItemDecoration(this, null, true, true));
+        recordList.addItemDecoration(new DividerItemDecoration(this, null, true, true));
+
+        player = (LinearLayout) findViewById(R.id.player);
         meetingFab = (ActionButton) findViewById(R.id.meetingFab);
         recordFab = (ActionButton) findViewById(R.id.recordFab);
+        recordContent = (RelativeLayout) findViewById(R.id.recordContent);
 
         databaseAdapter = new DatabaseAdapter(this);
         Bundle extras = getIntent().getExtras();
@@ -55,7 +64,12 @@ public class MeetRecActivity extends AppCompatActivity {
         if (extras != null) {
             contactID = extras.getInt("contactID");
             if (contactID != -1) {
+                contactsName = databaseAdapter.getContactsName(contactID);
+                if (contactsName == null){
+                    contactsName = "Unnamed contact "+contactID;
+                }
 
+                getSupportActionBar().setTitle(contactsName);
             }
         }
 
@@ -80,7 +94,7 @@ public class MeetRecActivity extends AppCompatActivity {
                 if (id >= 0) {
                     meetingAdapter.data.add(DUMMY_MEETING_TITLE + meetingCnt++);
                     meetingAdapter.ids.add(id);
-                    meetingAdapter.notifyItemRangeChanged(0, meetingAdapter.getItemCount());
+                    meetingAdapter.notifyItemRangeInserted(meetingAdapter.getItemCount() - 1, meetingAdapter.getItemCount());
                     meetingList.scrollToPosition(meetingAdapter.getItemCount() - 1);
                 }
             }
@@ -91,31 +105,49 @@ public class MeetRecActivity extends AppCompatActivity {
             public void onClick(View v) {
                 int id = databaseAdapter.insertDummyRecord(meetingID);
                 if (id >= 0) {
-                    recordAdapter.titles.add(DUMMY_RECORD_TITLE + recordCnt);
-                    recordAdapter.descriptions.add(DUMMY_RECORD_DESCRIPTION + recordCnt);
+                    int numberOfRecordsInCurrentMeeting = databaseAdapter.getRecordCount(meetingID);
+                    recordAdapter.titles.add(DUMMY_RECORD_TITLE + numberOfRecordsInCurrentMeeting);
+                    recordAdapter.descriptions.add(DUMMY_RECORD_DESCRIPTION + numberOfRecordsInCurrentMeeting);
                     recordAdapter.ids.add(id);
-                    recordCnt++;
-                    recordAdapter.notifyItemRangeChanged(0, recordAdapter.getItemCount());
+                    recordAdapter.notifyItemRangeInserted(recordAdapter.getItemCount()-1, recordAdapter.getItemCount());
                     recordList.scrollToPosition(recordAdapter.getItemCount() - 1);
                 }else{
-                    Toast.makeText(getBaseContext(), "Try again, please", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getBaseContext(), "Try again, please\nDatabase connection fail", Toast.LENGTH_SHORT).show();
                     Log.e("Database", "Insert to database was not successful");
                 }
             }
         });
 
         meetingAdapter = new MeetingAdapter(MeetRecActivity.this, data, meetingIDs);
-//        recordAdapter = new RecordAdapter(MeetRecActivity.this, titles, descriptions);
 
         meetingList.setAdapter(meetingAdapter);
         meetingList.setLayoutManager(new LinearLayoutManager(MeetRecActivity.this));
-//        recordList.setAdapter(recordAdapter);
         recordList.setLayoutManager(new LinearLayoutManager(MeetRecActivity.this));
     }
 
     protected void uncheckSpareItems(){
         for (int i=0; i< meetingList.getChildCount(); i++){
             meetingList.getChildAt(i).setBackgroundColor(getResources().getColor(R.color.uncheckedItem));
+        }
+    }
+
+    protected void removeMeeting(int itemID, int position){
+        int countOfAffectedRows = databaseAdapter.deleteMeeting(itemID);
+        if (countOfAffectedRows == 1){
+            meetingAdapter.data.remove(position);
+            meetingAdapter.ids.remove(position);
+            meetingAdapter.notifyItemRemoved(position);
+            meetingCnt--;
+            recordContent.setVisibility(View.GONE);
+        }
+    }
+
+    protected void removeRecord(int itemID, int position){
+        int countOfAffectedRows = databaseAdapter.deleteRecord(itemID);
+        if (countOfAffectedRows == 1){
+            recordAdapter.titles.remove(position);
+            recordAdapter.descriptions.remove(position);
+            recordAdapter.ids.remove(position);
         }
     }
 
@@ -130,41 +162,34 @@ public class MeetRecActivity extends AppCompatActivity {
         for (int i=0; i<records.size(); i++){
             recordIDs.add(Integer.parseInt(records.get(i)[0]));
             if (records.get(i)[1] == null){
-                titles.add(DUMMY_RECORD_TITLE+recordCnt);
+                titles.add(DUMMY_RECORD_TITLE+(i+1));
             }else{
                 titles.add(records.get(i)[1]);
             }
 
             if (records.get(i)[2] == null){
-                descriptions.add(DUMMY_RECORD_DESCRIPTION+recordCnt);
+                descriptions.add(DUMMY_RECORD_DESCRIPTION+(i+1));
             }else{
                 descriptions.add(records.get(i)[2]);
             }
-            recordCnt++;
         }
 
         recordAdapter = new RecordAdapter(MeetRecActivity.this, titles, descriptions, recordIDs);
         recordList.setAdapter(recordAdapter);
-//        recordList.setLayoutManager(new LinearLayoutManager(MeetRecActivity.this));
-        recordFab.setVisibility(View.VISIBLE);
+        recordContent.setVisibility(View.VISIBLE);
 
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }

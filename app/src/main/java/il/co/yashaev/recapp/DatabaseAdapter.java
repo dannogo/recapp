@@ -43,6 +43,7 @@ public class DatabaseAdapter {
             result.add(row);
 
         }
+        cursor.close();
         return result;
     }
 
@@ -72,6 +73,7 @@ public class DatabaseAdapter {
                 String[] row = {String.valueOf(id), title, icon, String.valueOf(relatedContact)};
                 result.add(row);
             }
+            cursor.close();
         }else{
             Log.e("DATABASE", "Unknown contact ID\nCheck method getMeetingsData in DatabaseAdapter class");
         }
@@ -106,7 +108,22 @@ public class DatabaseAdapter {
             String[] row = {String.valueOf(id), title, desc, icon, String.valueOf(relatedMeeting)};
             result.add(row);
         }
+        cursor.close();
         return result;
+    }
+
+    public String getContactsName(int contactID){
+        SQLiteDatabase db = helper.getWritableDatabase();
+
+        String[] columns = {SQLHelper.CONTACTS_NAME};
+        String[] whereArgs = {String.valueOf(contactID)};
+
+        Cursor cursor = db.query(SQLHelper.TABLE_NAME_CONTACTS, columns, SQLHelper.CONTACTS_ID+" =?",
+                whereArgs, null, null, null);
+        cursor.moveToNext();
+        int nameIndex = cursor.getColumnIndex(SQLHelper.CONTACTS_NAME);
+        String name = cursor.getString(nameIndex);
+        return name;
     }
 
 
@@ -184,13 +201,34 @@ public class DatabaseAdapter {
         return count;
     }
 
+    public int deleteContact(int contactID){
+        SQLiteDatabase db = helper.getWritableDatabase();
+        String[] whereArgs = {String.valueOf(contactID)};
+        int count = db.delete(SQLHelper.TABLE_NAME_CONTACTS, SQLHelper.CONTACTS_ID + " =?", whereArgs);
+        return count;
+    }
+
+    public int deleteMeeting(int meetingID){
+        SQLiteDatabase db = helper.getWritableDatabase();
+        String[] whereArgs = {String.valueOf(meetingID)};
+        int count = db.delete(SQLHelper.TABLE_NAME_MEETINGS, SQLHelper.MEETINGS_ID+" =?", whereArgs);
+        return count;
+    }
+
+    public int deleteRecord(int recordID){
+        SQLiteDatabase db = helper.getWritableDatabase();
+        String[] whereArgs = {String.valueOf(recordID)};
+        int count = db.delete(SQLHelper.TABLE_NAME_RECORDS, SQLHelper.RECORDS_ID+" =?", whereArgs);
+        return count;
+    }
+
 
 
     static class SQLHelper extends SQLiteOpenHelper{
 
         private Context context;
         private static final String DATABASE_NAME = "recapp";
-        private static final int DATABASE_VERSION = 3;
+        private static final int DATABASE_VERSION = 4;
 
         // Table contacts
         private static final String TABLE_NAME_CONTACTS = "contacts";
@@ -199,8 +237,8 @@ public class DatabaseAdapter {
         private static final String CONTACTS_DESCRIPTION = "description";
         private static final String CONTACTS_ICON = "icon";
 
-        private static final String CREATE_TABLE_CONTACTS = "CREATE TABLE "+TABLE_NAME_CONTACTS+"("+
-                    CONTACTS_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+        private static final String CREATE_TABLE_CONTACTS = "CREATE TABLE "+TABLE_NAME_CONTACTS+"("
+                    + CONTACTS_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                     + CONTACTS_NAME + " VARCHAR(255), "
                     + CONTACTS_DESCRIPTION + " VARCHAR(255), "
                     + CONTACTS_ICON + " VARCHAR(255)" +
@@ -219,7 +257,7 @@ public class DatabaseAdapter {
                     + MEETINGS_TITLE+" VARCHAR(255), "
                     + MEETINGS_ICON+" VARCHAR(255), "
                     + MEETINGS_RELATED_CONTACT+" INTEGER NOT NULL, "
-                    + "FOREIGN KEY("+MEETINGS_RELATED_CONTACT+") REFERENCES "+TABLE_NAME_CONTACTS+"("+CONTACTS_ID+")"
+                    + "FOREIGN KEY("+MEETINGS_RELATED_CONTACT+") REFERENCES "+TABLE_NAME_CONTACTS+"("+CONTACTS_ID+")  ON DELETE CASCADE"
                 + ");";
         private static final String DROP_TABLE_MEETINGS = "DROP TABLE IF EXISTS "+TABLE_NAME_MEETINGS;
 
@@ -237,7 +275,7 @@ public class DatabaseAdapter {
                     + RECORDS_DESCRIPTION+" VARCHAR(255), "
                     + RECORDS_ICON+" VARCHAR(255), "
                     + RECORDS_RELATED_MEETING+" INTEGER NOT NULL, "
-                    + "FOREIGN KEY("+RECORDS_RELATED_MEETING+") REFERENCES "+TABLE_NAME_MEETINGS+"("+MEETINGS_ID+")"
+                    + "FOREIGN KEY("+RECORDS_RELATED_MEETING+") REFERENCES "+TABLE_NAME_MEETINGS+"("+MEETINGS_ID+")  ON DELETE CASCADE"
                 + ");";
 
         private static final String DROP_TABLE_RECORDS = "DROP TABLE IF EXISTS "+TABLE_NAME_RECORDS;

@@ -12,37 +12,47 @@
         android:scaleType="centerInside"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:src="@drawable/rabbit"
+        android:src="@drawable/stork"
         />
 
-    <RelativeLayout
-        android:id="@+id/contentLayout"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
+        android:layout_height="match_parent"
+        android:weightSum="10"
         >
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            ></View>
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/contactList"
-            android:layout_width="match_parent"
+        <RelativeLayout
+            android:id="@+id/contentLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:scrollbars="vertical"
-            />
+            android:layout_weight="7"
+            android:visibility="gone">
 
-        <com.software.shell.fab.ActionButton
-            android:id="@+id/contactFab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:layout_marginBottom="@dimen/fab_margin"
-            android:layout_marginRight="@dimen/fab_margin"
-            fab:button_color="#E53935"
-            fab:image="@drawable/plus"
-            fab:image_size="30dp"
-            fab:type="MINI"
-            />
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/contactList"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="vertical" />
 
-    </RelativeLayout>
+            <com.software.shell.fab.ActionButton
+                android:id="@+id/contactFab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginBottom="@dimen/fab_margin"
+                android:layout_marginRight="@dimen/fab_margin"
+                fab:button_color="#E53935"
+                fab:image="@drawable/plus"
+                fab:image_size="30dp"
+                fab:type="MINI" />
+
+        </RelativeLayout>
+    </LinearLayout>
 
 </RelativeLayout>

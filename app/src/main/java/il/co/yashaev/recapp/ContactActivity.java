@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.software.shell.fab.ActionButton;
 
@@ -24,8 +25,8 @@ public class ContactActivity extends AppCompatActivity {
     private RecyclerView contactList;
     private ContactAdapter contactAdapter;
     private ActionButton contactFab;
-    protected final String DUMMY_NAME = "Name fab ";
-    protected final String DUMMY_DESCRIPTION = "Description fab ";
+    protected final String DUMMY_NAME = "Contact name ";
+    protected final String DUMMY_DESCRIPTION = "Contacr description ";
     DatabaseAdapter databaseAdapter;
     private ImageView logo;
     private RelativeLayout contentLayout;
@@ -39,6 +40,9 @@ public class ContactActivity extends AppCompatActivity {
         databaseAdapter = new DatabaseAdapter(this);
 
         contactList = (RecyclerView) findViewById(R.id.contactList);
+        contactList.addItemDecoration(new DividerItemDecoration(this, null, true, true));
+
+
         contactFab = (ActionButton) findViewById(R.id.contactFab);
         logo = (ImageView) findViewById(R.id.logo);
         contentLayout = (RelativeLayout) findViewById(R.id.contentLayout);
@@ -83,7 +87,7 @@ public class ContactActivity extends AppCompatActivity {
                     contactAdapter.descriptions.add(DUMMY_DESCRIPTION + contactCnt);
                     contactAdapter.ids.add(id);
                     contactCnt++;
-                    contactAdapter.notifyItemRangeChanged(0, contactAdapter.getItemCount());
+                    contactAdapter.notifyItemRangeInserted(contactAdapter.getItemCount()-1, contactAdapter.getItemCount());
                     contactList.scrollToPosition(contactAdapter.getItemCount() - 1);
                 }
             }
@@ -95,6 +99,17 @@ public class ContactActivity extends AppCompatActivity {
         contactList.setLayoutManager(new LinearLayoutManager(ContactActivity.this));
 
 
+    }
+
+    protected void removeContact(int itemID, int position){
+        int countOfAffectedRows = databaseAdapter.deleteContact(itemID);
+        if (countOfAffectedRows == 1) {
+            contactAdapter.names.remove(position);
+            contactAdapter.descriptions.remove(position);
+            contactAdapter.ids.remove(position);
+            contactAdapter.notifyItemRemoved(position);
+            contactCnt--;
+        }
     }
 
     @Override

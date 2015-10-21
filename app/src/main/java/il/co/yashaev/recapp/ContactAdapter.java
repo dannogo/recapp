@@ -1,7 +1,9 @@
 package il.co.yashaev.recapp;
 
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -112,8 +114,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         private EditText editDescription;
         private TextView databaseID;
         private InputMethodManager imm;
-
-
+        private ImageView trash;
 
         public ContactViewHolder(final View itemView, Context context) {
             super(itemView);
@@ -123,6 +124,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
             description = (TextView) itemView.findViewById(R.id.contactDescription);
             editDescription = (EditText) itemView.findViewById(R.id.editDescription);
             databaseID = (TextView) itemView.findViewById(R.id.databaseID);
+            trash = (ImageView) itemView.findViewById(R.id.deleteContact);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -132,6 +134,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
             description.setOnLongClickListener(this);
             name.setOnClickListener(this);
             description.setOnClickListener(this);
+            trash.setOnClickListener(this);
 
 
             editName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -162,9 +165,21 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
 
         @Override
         public void onClick(View v) {
-            Intent intent = new Intent(context , MeetRecActivity.class);
-            intent.putExtra("contactID", Integer.parseInt(databaseID.getText().toString()));
-            context.startActivity(intent);
+
+            if (v.getId() == trash.getId()){
+                RemoveConfirmation dialog = new RemoveConfirmation();
+                Bundle data = new Bundle();
+                data.putString("purpose", "contacts");
+                data.putInt("itemID", Integer.parseInt(databaseID.getText().toString()));
+                data.putInt("position", getPosition());
+                dialog.setArguments(data);
+                FragmentManager fragmentManager = ((ContactActivity)context).getFragmentManager();
+                dialog.show(fragmentManager, "Confirmation");
+            }else{
+                Intent intent = new Intent(context , MeetRecActivity.class);
+                intent.putExtra("contactID", Integer.parseInt(databaseID.getText().toString()));
+                context.startActivity(intent);
+            }
         }
 
         @Override
@@ -207,7 +222,6 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
                 }
 
             }
-
             return true;
         }
     }

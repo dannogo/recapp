@@ -1,8 +1,10 @@
 package il.co.yashaev.recapp;
 
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -62,10 +64,8 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
 
         if (position == checkedMeeting){
             ((LinearLayout)holder.title.getParent()).setBackgroundColor(context.getResources().getColor(R.color.checkedItem));
-//            Log.e("LOG", ""+position);
         }else{
             ((LinearLayout)holder.title.getParent()).setBackgroundColor(context.getResources().getColor(R.color.uncheckedItem));
-//            ((LinearLayout)holder.title.getParent()).setBackgroundColor(Color.parseColor("#FAFAFA"));
         }
 
         holder.editTitle.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -98,11 +98,12 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
     class MeetingViewHolder extends RecyclerView.ViewHolder
         implements View.OnClickListener, View.OnLongClickListener{
 
-        ImageView icon;
-        TextView title;
-        EditText editTitle;
-        TextView databaseID;
+        private ImageView icon;
+        private TextView title;
+        private EditText editTitle;
+        private TextView databaseID;
         private InputMethodManager imm;
+        ImageView trash;
 
         public MeetingViewHolder(View itemView, Context context) {
             super(itemView);
@@ -110,6 +111,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
             title = (TextView) itemView.findViewById(R.id.meetingTitle);
             editTitle = (EditText) itemView.findViewById(R.id.editTitle);
             databaseID = (TextView) itemView.findViewById(R.id.databaseMeetingID);
+            trash = (ImageView) itemView.findViewById(R.id.deleteMeeting);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -117,12 +119,13 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
             itemView.setOnClickListener(this);
             title.setOnLongClickListener(this);
             title.setOnClickListener(this);
+            trash.setOnClickListener(this);
 
             editTitle.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
-                    if (!hasFocus){
-                        if (!editTitle.getText().toString().isEmpty()){
+                    if (!hasFocus) {
+                        if (!editTitle.getText().toString().isEmpty()) {
                             title.setText(editTitle.getText());
                         }
                         editTitle.setVisibility(View.GONE);
@@ -134,14 +137,28 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
 
         @Override
         public void onClick(View v) {
-            checkedMeeting = getPosition();
-            ((MeetRecActivity)context).uncheckSpareItems();
-            itemView.setBackgroundColor(context.getResources().getColor(R.color.checkedItem));
+            if (v.getId() == trash.getId()){
+                RemoveConfirmation dialog = new RemoveConfirmation();
+                Bundle data = new Bundle();
+                data.putString("purpose", "meetings");
+                data.putInt("itemID", Integer.parseInt(databaseID.getText().toString()));
+                data.putInt("position", getPosition());
+                dialog.setArguments(data);
+                FragmentManager fragmentManager = ((MeetRecActivity)context).getFragmentManager();
+                dialog.show(fragmentManager, "Confirmation");
+            }else {
+                checkedMeeting = getPosition();
+                ((MeetRecActivity) context).uncheckSpareItems();
+                itemView.setBackgroundColor(context.getResources().getColor(R.color.checkedItem));
 
-            int meetID = Integer.parseInt(databaseID.getText().toString());
-            ((MeetRecActivity)context).meetingID = meetID;
-            ((MeetRecActivity)context).showRecords(meetID);
-
+                int meetID = Integer.parseInt(databaseID.getText().toString());
+                ((MeetRecActivity) context).meetingID = meetID;
+                ((MeetRecActivity) context).showRecords(meetID);
+                StringBuffer stringBuffer = new StringBuffer(((MeetRecActivity) context).contactsName);
+                stringBuffer.append(" / ");
+                stringBuffer.append(title.getText());
+                ((MeetRecActivity) context).getSupportActionBar().setTitle(stringBuffer.toString());
+            }
 
         }
 

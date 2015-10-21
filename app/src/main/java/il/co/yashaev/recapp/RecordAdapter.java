@@ -1,6 +1,8 @@
 package il.co.yashaev.recapp;
 
+import android.app.FragmentManager;
 import android.content.Context;
+import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -12,6 +14,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -34,8 +37,8 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         this.context = context;
 
         if (this.titles.isEmpty() && this.descriptions.isEmpty()){
-            this.titles.add(((MeetRecActivity)context).DUMMY_RECORD_TITLE + ((MeetRecActivity)context).recordCnt);
-            this.descriptions.add(((MeetRecActivity)context).DUMMY_RECORD_DESCRIPTION + ((MeetRecActivity)context).recordCnt++);
+            this.titles.add(((MeetRecActivity)context).DUMMY_RECORD_TITLE + 1);
+            this.descriptions.add(((MeetRecActivity)context).DUMMY_RECORD_DESCRIPTION + 1);
             int id = ((MeetRecActivity)this.context).databaseAdapter.insertDummyRecord(((MeetRecActivity)this.context).meetingID);
             this.ids.add(id);
         }
@@ -115,6 +118,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         EditText editDescription;
         private TextView databaseID;
         private InputMethodManager imm;
+        ImageView trash;
 
         public RecordViewHloder(View itemView, Context context) {
             super(itemView);
@@ -124,6 +128,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
             description = (TextView) itemView.findViewById(R.id.recordDescription);
             editDescription = (EditText) itemView.findViewById(R.id.editDescription);
             databaseID = (TextView) itemView.findViewById(R.id.databaseRecordID);
+            trash = (ImageView) itemView.findViewById(R.id.deleteRecord);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -133,6 +138,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
             description.setOnLongClickListener(this);
             title.setOnClickListener(this);
             description.setOnClickListener(this);
+            trash.setOnClickListener(this);
 
             editTitle.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
@@ -163,7 +169,23 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
 
         @Override
         public void onClick(View v) {
-            Log.w("LOG", "CLICK");
+            if (v.getId() == trash.getId()){
+                RemoveConfirmation dialog = new RemoveConfirmation();
+                Bundle data = new Bundle();
+                data.putString("purpose", "records");
+                data.putInt("itemID", Integer.parseInt(databaseID.getText().toString()));
+                data.putInt("position", getPosition());
+                dialog.setArguments(data);
+                FragmentManager fragmentManager = ((MeetRecActivity)context).getFragmentManager();
+                dialog.show(fragmentManager, "Confirmation");
+            }else {
+                int playerViaibility = ((MeetRecActivity)context).player.getVisibility();
+                if (playerViaibility == View.GONE){
+                    ((MeetRecActivity)context).player.setVisibility(View.VISIBLE);
+                }else{
+                    ((MeetRecActivity)context).player.setVisibility(View.GONE);
+                }
+            }
         }
 
         @Override

@@ -148,6 +148,7 @@ public class MeetRecActivity extends AppCompatActivity {
             recordAdapter.titles.remove(position);
             recordAdapter.descriptions.remove(position);
             recordAdapter.ids.remove(position);
+            recordAdapter.notifyItemRemoved(position);
         }
     }
 

@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.widget.Toast;
 
 /**
  * Created by oleh on 10/21/15.
@@ -52,7 +53,8 @@ public class RemoveConfirmation extends DialogFragment {
                 if (purpose.equals("contacts")){
                     ((ContactActivity)getActivity()).removeContact(itemID, position);
                 }else if (purpose.equals("meetings")){
-                    ((MeetRecActivity)getActivity()).removeMeeting(itemID, position);
+                    boolean isChecked = getArguments().getBoolean("isChecked");
+                    ((MeetRecActivity)getActivity()).removeMeeting(itemID, position, isChecked);
                 }else if (purpose.equals("records")){
                     ((MeetRecActivity)getActivity()).removeRecord(itemID, position);
                 }

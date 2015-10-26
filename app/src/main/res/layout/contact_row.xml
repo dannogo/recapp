@@ -75,13 +75,13 @@
     </LinearLayout>
 
     <ImageView
-        android:id="@+id/deleteContact"
+        android:id="@+id/editContact"
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_gravity="center_vertical"
-        android:src="@drawable/delete"
+        android:src="@drawable/pencil"
         android:layout_marginRight="20dp"
-        android:padding="8dp"
+        android:padding="10dp"
         android:layout_weight="0"
         />
 

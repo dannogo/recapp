@@ -131,14 +131,17 @@ public class MeetRecActivity extends AppCompatActivity {
         }
     }
 
-    protected void removeMeeting(int itemID, int position){
+    protected void removeMeeting(int itemID, int position, boolean isChecked){
         int countOfAffectedRows = databaseAdapter.deleteMeeting(itemID);
         if (countOfAffectedRows == 1){
             meetingAdapter.data.remove(position);
             meetingAdapter.ids.remove(position);
             meetingAdapter.notifyItemRemoved(position);
             meetingCnt--;
-            recordContent.setVisibility(View.GONE);
+            if (isChecked) {
+                recordContent.setVisibility(View.GONE);
+                getSupportActionBar().setTitle(contactsName);
+            }
         }
     }
 

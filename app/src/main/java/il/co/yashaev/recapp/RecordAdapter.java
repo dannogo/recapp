@@ -4,17 +4,17 @@ import android.app.FragmentManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -118,7 +118,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         EditText editDescription;
         private TextView databaseID;
         private InputMethodManager imm;
-        ImageView trash;
+        ImageView edit;
 
         public RecordViewHloder(View itemView, Context context) {
             super(itemView);
@@ -128,7 +128,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
             description = (TextView) itemView.findViewById(R.id.recordDescription);
             editDescription = (EditText) itemView.findViewById(R.id.editDescription);
             databaseID = (TextView) itemView.findViewById(R.id.databaseRecordID);
-            trash = (ImageView) itemView.findViewById(R.id.deleteRecord);
+            edit = (ImageView) itemView.findViewById(R.id.editRecord);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -138,7 +138,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
             description.setOnLongClickListener(this);
             title.setOnClickListener(this);
             description.setOnClickListener(this);
-            trash.setOnClickListener(this);
+            edit.setOnClickListener(this);
 
             editTitle.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
@@ -169,15 +169,29 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
 
         @Override
         public void onClick(View v) {
-            if (v.getId() == trash.getId()){
-                RemoveConfirmation dialog = new RemoveConfirmation();
-                Bundle data = new Bundle();
-                data.putString("purpose", "records");
-                data.putInt("itemID", Integer.parseInt(databaseID.getText().toString()));
-                data.putInt("position", getPosition());
-                dialog.setArguments(data);
-                FragmentManager fragmentManager = ((MeetRecActivity)context).getFragmentManager();
-                dialog.show(fragmentManager, "Confirmation");
+            if (v.getId() == edit.getId()){
+
+                PopupMenu popup = new PopupMenu(context, edit);
+                popup.getMenuInflater().inflate(R.menu.edit_item_menu, popup.getMenu());
+
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if (item.getItemId() == R.id.delete){
+                            RemoveConfirmation dialog = new RemoveConfirmation();
+                            Bundle data = new Bundle();
+                            data.putString("purpose", "records");
+                            data.putInt("itemID", Integer.parseInt(databaseID.getText().toString()));
+                            data.putInt("position", getPosition());
+                            dialog.setArguments(data);
+                            FragmentManager fragmentManager = ((MeetRecActivity)context).getFragmentManager();
+                            dialog.show(fragmentManager, "Confirmation");
+                        }
+                        return true;
+                    }
+                });
+                popup.show();
+
             }else {
                 int playerViaibility = ((MeetRecActivity)context).player.getVisibility();
                 if (playerViaibility == View.GONE){

@@ -47,13 +47,13 @@
 
 
     <ImageView
-        android:id="@+id/deleteMeeting"
+        android:id="@+id/editMeeting"
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_gravity="center_vertical"
-        android:src="@drawable/delete"
+        android:src="@drawable/pencil"
         android:layout_marginRight="0dp"
-        android:padding="8dp"
+        android:padding="10dp"
         android:layout_weight="0"
         />
 

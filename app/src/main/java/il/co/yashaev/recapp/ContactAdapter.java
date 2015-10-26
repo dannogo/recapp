@@ -7,15 +7,16 @@ import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
-
-import org.w3c.dom.Text;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -114,7 +115,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         private EditText editDescription;
         private TextView databaseID;
         private InputMethodManager imm;
-        private ImageView trash;
+        private ImageView edit;
 
         public ContactViewHolder(final View itemView, Context context) {
             super(itemView);
@@ -124,7 +125,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
             description = (TextView) itemView.findViewById(R.id.contactDescription);
             editDescription = (EditText) itemView.findViewById(R.id.editDescription);
             databaseID = (TextView) itemView.findViewById(R.id.databaseID);
-            trash = (ImageView) itemView.findViewById(R.id.deleteContact);
+            edit = (ImageView) itemView.findViewById(R.id.editContact);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -134,7 +135,7 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
             description.setOnLongClickListener(this);
             name.setOnClickListener(this);
             description.setOnClickListener(this);
-            trash.setOnClickListener(this);
+            edit.setOnClickListener(this);
 
 
             editName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -166,15 +167,29 @@ public class ContactAdapter extends RecyclerView.Adapter<ContactAdapter.ContactV
         @Override
         public void onClick(View v) {
 
-            if (v.getId() == trash.getId()){
-                RemoveConfirmation dialog = new RemoveConfirmation();
-                Bundle data = new Bundle();
-                data.putString("purpose", "contacts");
-                data.putInt("itemID", Integer.parseInt(databaseID.getText().toString()));
-                data.putInt("position", getPosition());
-                dialog.setArguments(data);
-                FragmentManager fragmentManager = ((ContactActivity)context).getFragmentManager();
-                dialog.show(fragmentManager, "Confirmation");
+            if (v.getId() == edit.getId()){
+
+                PopupMenu popup = new PopupMenu(context, edit);
+                popup.getMenuInflater().inflate(R.menu.edit_item_menu, popup.getMenu());
+
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if (item.getItemId() == R.id.delete){
+                            RemoveConfirmation dialog = new RemoveConfirmation();
+                            Bundle data = new Bundle();
+                            data.putString("purpose", "contacts");
+                            data.putInt("itemID", Integer.parseInt(databaseID.getText().toString()));
+                            data.putInt("position", getPosition());
+                            dialog.setArguments(data);
+                            FragmentManager fragmentManager = ((ContactActivity)context).getFragmentManager();
+                            dialog.show(fragmentManager, "Confirmation");
+                        }
+                        return true;
+                    }
+                });
+                popup.show();
+
             }else{
                 Intent intent = new Intent(context , MeetRecActivity.class);
                 intent.putExtra("contactID", Integer.parseInt(databaseID.getText().toString()));

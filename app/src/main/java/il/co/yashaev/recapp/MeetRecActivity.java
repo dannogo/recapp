@@ -1,6 +1,11 @@
 package il.co.yashaev.recapp;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -8,12 +13,17 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.software.shell.fab.ActionButton;
 
+import org.w3c.dom.Text;
+
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -35,6 +45,10 @@ public class MeetRecActivity extends AppCompatActivity {
     protected DatabaseAdapter databaseAdapter;
     protected int contactID = -1;
     protected int meetingID = -1;
+    protected boolean isNowRecording = false;
+    private boolean isNowPlaying = false;
+    private ImageView playStop;
+    private MediaPlayer   mediaPlayer = null;
 
     private ArrayList<String> titles = new ArrayList<>();
     private ArrayList<String> descriptions = new ArrayList<>();
@@ -42,6 +56,7 @@ public class MeetRecActivity extends AppCompatActivity {
 
     protected int meetingCnt = 1;
     protected String contactsName = "Undefined";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +69,22 @@ public class MeetRecActivity extends AppCompatActivity {
         recordList.addItemDecoration(new DividerItemDecoration(this, null, true, true));
 
         player = (LinearLayout) findViewById(R.id.player);
+        playStop = (ImageView) findViewById(R.id.playStop);
+        playStop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!isNowPlaying) {
+                    TextView idOfRecordInPlayer = (TextView) findViewById(R.id.idOfRecordInPlayer);
+                    String file = databaseAdapter.getRecordsFile(Integer.parseInt(idOfRecordInPlayer.getText().toString()));
+                    startPlaying(file);
+                }else{
+                    stopPlaying();
+                }
+
+            }
+        });
+
+
         meetingFab = (ActionButton) findViewById(R.id.meetingFab);
         recordFab = (ActionButton) findViewById(R.id.recordFab);
         recordContent = (RelativeLayout) findViewById(R.id.recordContent);
@@ -125,6 +156,59 @@ public class MeetRecActivity extends AppCompatActivity {
         recordList.setLayoutManager(new LinearLayoutManager(MeetRecActivity.this));
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == 1){
+            if (resultCode == Activity.RESULT_OK){
+                isNowRecording = false;
+
+                int recordID = Integer.parseInt(data.getStringExtra("recordID"));
+                recordAdapter.recordsWithAudio.add(recordID);
+                recordAdapter.notifyDataSetChanged();
+
+                for (int i=0; i< recordList.getChildCount(); i++){
+                    View currentItem = recordList.getChildAt(i);
+                    TextView idField = (TextView) currentItem.findViewById(R.id.databaseRecordID);
+                    int idOfCurrentRecord = Integer.parseInt(idField.getText().toString());
+                    if (recordAdapter.recordsWithAudio.contains(idOfCurrentRecord)){
+                        ((ImageView) currentItem.findViewById(R.id.recordIcon)).setImageResource(R.drawable.play);
+                        currentItem.findViewById(R.id.rewriteRecord).setVisibility(View.VISIBLE);
+
+                    }
+
+                }
+
+            }
+        }
+    }
+
+    private void startPlaying(String file) {
+        isNowPlaying = true;
+        mediaPlayer = new MediaPlayer();
+        try {
+            mediaPlayer.setDataSource(file);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+            playStop.setImageResource(R.drawable.pause);
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    stopPlaying();
+                }
+            });
+        } catch (IOException e) {
+            Log.e("Player", "prepare() failed");
+        }
+    }
+
+    private void stopPlaying() {
+        mediaPlayer.release();
+        mediaPlayer = null;
+        playStop.setImageResource(R.drawable.play);
+        isNowPlaying = false;
+    }
+
     protected void uncheckSpareItems(){
         for (int i=0; i< meetingList.getChildCount(); i++){
             meetingList.getChildAt(i).setBackgroundColor(getResources().getColor(R.color.uncheckedItem));
@@ -178,7 +262,10 @@ public class MeetRecActivity extends AppCompatActivity {
             }
         }
 
-        recordAdapter = new RecordAdapter(MeetRecActivity.this, titles, descriptions, recordIDs);
+        ArrayList<Integer> recordsWithAudio = databaseAdapter.getRecordsWithAudio(meetingID);
+
+        recordAdapter = new RecordAdapter(MeetRecActivity.this, titles,
+                descriptions, recordIDs, recordsWithAudio);
         recordList.setAdapter(recordAdapter);
         recordContent.setVisibility(View.VISIBLE);
 

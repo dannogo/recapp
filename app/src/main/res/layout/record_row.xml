@@ -75,12 +75,25 @@
     </LinearLayout>
 
     <ImageView
+        android:id="@+id/rewriteRecord"
+        android:layout_width="25dp"
+        android:layout_height="45dp"
+        android:layout_gravity="center_vertical"
+        android:src="@drawable/microphone"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:layout_weight="0"
+        android:visibility="gone"
+        />
+
+
+    <ImageView
         android:id="@+id/editRecord"
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_gravity="center_vertical"
-        android:src="@drawable/pencil"
-        android:layout_marginRight="8dp"
+        android:src="@drawable/menu"
+        android:layout_marginRight="0dp"
         android:padding="10dp"
         android:layout_weight="0"
         />

@@ -2,8 +2,10 @@ package il.co.yashaev.recapp;
 
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -15,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -27,13 +30,17 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
     ArrayList<String> titles;
     ArrayList<String> descriptions;
     protected ArrayList<Integer> ids;
+    protected ArrayList<Integer> recordsWithAudio;
     Context context;
 
-    public RecordAdapter(Context context, ArrayList<String> titles, ArrayList<String> descriptions,  ArrayList<Integer> ids){
+    public RecordAdapter(Context context, ArrayList<String> titles,
+                         ArrayList<String> descriptions,  ArrayList<Integer> ids,
+                         ArrayList<Integer> recordsWithAudio){
         inflater = LayoutInflater.from(context);
         this.titles = new ArrayList<>(titles);
         this.descriptions = new ArrayList<>(descriptions);
         this.ids = new ArrayList<>(ids);
+        this.recordsWithAudio = new ArrayList<>(recordsWithAudio);
         this.context = context;
 
         if (this.titles.isEmpty() && this.descriptions.isEmpty()){
@@ -58,7 +65,16 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         holder.icon.setImageResource(R.drawable.microphone);
         holder.title.setText(titles.get(position));
         holder.description.setText(descriptions.get(position));
-        holder.databaseID.setText(String.valueOf(ids.get(position)));
+        int databaseID  = ids.get(position);
+        holder.databaseID.setText(String.valueOf(databaseID));
+
+        if(recordsWithAudio.contains(databaseID)){
+            holder.icon.setImageResource(R.drawable.play);
+            holder.rewriteRecord.setVisibility(View.VISIBLE);
+        }else{
+            holder.icon.setImageResource(R.drawable.microphone);
+            holder.rewriteRecord.setVisibility(View.GONE);
+        }
 
         holder.editTitle.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -68,7 +84,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                     String editTextContent = holder.editTitle.getText().toString();
                     if (!editTextContent.isEmpty()) {
                         int currentID = Integer.parseInt(holder.databaseID.getText().toString());
-                        int res = ((MeetRecActivity)context).databaseAdapter.updateRecord(editTextContent, null, currentID);
+                        int res = ((MeetRecActivity)context).databaseAdapter.updateRecord(editTextContent, null, null, currentID);
                         if (res == 1) {
                             holder.title.setText(editTextContent);
                             titles.set(position, editTextContent);
@@ -89,7 +105,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                     String editTextContent = holder.editDescription.getText().toString();
                     if (!editTextContent.isEmpty()) {
                         int currentID = Integer.parseInt(holder.databaseID.getText().toString());
-                        int res = ((MeetRecActivity)context).databaseAdapter.updateRecord(null, editTextContent, currentID);
+                        int res = ((MeetRecActivity)context).databaseAdapter.updateRecord(null, editTextContent, null, currentID);
                         if (res == 1) {
                             holder.description.setText(editTextContent);
                             descriptions.set(position, editTextContent);
@@ -118,7 +134,9 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
         EditText editDescription;
         private TextView databaseID;
         private InputMethodManager imm;
-        ImageView edit;
+        ImageView edit, rewriteRecord;
+
+
 
         public RecordViewHloder(View itemView, Context context) {
             super(itemView);
@@ -129,6 +147,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
             editDescription = (EditText) itemView.findViewById(R.id.editDescription);
             databaseID = (TextView) itemView.findViewById(R.id.databaseRecordID);
             edit = (ImageView) itemView.findViewById(R.id.editRecord);
+            rewriteRecord = (ImageView) itemView.findViewById(R.id.rewriteRecord);
 
             imm = (InputMethodManager)
                     context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -139,6 +158,7 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
             title.setOnClickListener(this);
             description.setOnClickListener(this);
             edit.setOnClickListener(this);
+            rewriteRecord.setOnClickListener(this);
 
             editTitle.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
@@ -165,6 +185,8 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                     }
                 }
             });
+
+
         }
 
         @Override
@@ -192,15 +214,47 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                 });
                 popup.show();
 
-            }else {
-                int playerViaibility = ((MeetRecActivity)context).player.getVisibility();
-                if (playerViaibility == View.GONE){
-                    ((MeetRecActivity)context).player.setVisibility(View.VISIBLE);
+            }else if (v.getId() == rewriteRecord.getId()) {
+                if (!((MeetRecActivity)context).isNowRecording) {
+                    OverwriteRecordConfirmation dialog = new OverwriteRecordConfirmation();
+                    Bundle data = new Bundle();
+                    data.putString("recordID", databaseID.getText().toString());
+                    dialog.setArguments(data);
+                    FragmentManager fragmentManager = ((MeetRecActivity)context).getFragmentManager();
+                    dialog.show(fragmentManager, "Overwrite confirmation");
                 }else{
-                    ((MeetRecActivity)context).player.setVisibility(View.GONE);
+                    Toast.makeText(context, "First stop current recording", Toast.LENGTH_SHORT).show();
                 }
+            }else {
+                if (recordsWithAudio.contains(Integer.parseInt(databaseID.getText().toString()))){
+
+                    int playerVisibility = ((MeetRecActivity)context).player.getVisibility();
+                    TextView idOfRecordInPlayer = (TextView) ((MeetRecActivity) context).player.findViewById(R.id.idOfRecordInPlayer);
+                    if (idOfRecordInPlayer.getText().toString().equals(databaseID.getText().toString())){
+                        if (playerVisibility == View.GONE){
+                            ((MeetRecActivity)context).player.setVisibility(View.VISIBLE);
+                        }else{
+                            ((MeetRecActivity)context).player.setVisibility(View.GONE);
+                        }
+                    }else{
+                        idOfRecordInPlayer.setText(databaseID.getText());
+                        ((MeetRecActivity)context).player.setVisibility(View.VISIBLE);
+                    }
+                }else {
+                    if (!((MeetRecActivity)context).isNowRecording) {
+//                        ((MeetRecActivity)context).player.setVisibility(View.GONE);
+                        Intent intent = new Intent(context, RecordingCoverActivity.class);
+                        intent.putExtra("recordID", databaseID.getText().toString());
+                        ((MeetRecActivity) context).isNowRecording = true;
+                        ((MeetRecActivity) context).startActivityForResult(intent, 1);
+                    }else{
+                        Toast.makeText(context, "First stop current recording", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
             }
         }
+
 
         @Override
         public boolean onLongClick(View v) {

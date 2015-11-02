@@ -4,7 +4,6 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     >
-    <!--android:background="@drawable/border_on_top"-->
 
     <TextView
         android:id="@+id/databaseID"
@@ -79,7 +78,7 @@
         android:layout_width="45dp"
         android:layout_height="45dp"
         android:layout_gravity="center_vertical"
-        android:src="@drawable/pencil"
+        android:src="@drawable/menu"
         android:layout_marginRight="20dp"
         android:padding="10dp"
         android:layout_weight="0"

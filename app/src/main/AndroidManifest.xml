@@ -2,9 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="il.co.yashaev.recapp" >
 
+    <!--links:-->
+    <!--https://icons8.com/license/-->
+    <!--https://github.com/castorflex/SmoothProgressBar-->
+    <!--https://gist.github.com/lapastillaroja/858caf1a82791b6c1a36-->
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/microphone_icon"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
 
@@ -27,6 +35,16 @@
             android:label="@string/meet_rec_activity"
             android:screenOrientation="landscape"
             />
+
+        <activity
+            android:name=".RecordingCoverActivity"
+            android:theme="@style/Theme.Transparent"
+            android:label=""
+            android:screenOrientation="landscape"
+
+            >
+
+        </activity>
     </application>
 
 </manifest>

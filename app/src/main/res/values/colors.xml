@@ -2,4 +2,7 @@
 <resources>
     <color name="checkedItem">#EEEEEE</color>
     <color name="uncheckedItem">#FAFAFA</color>
+    <color name="progressColor">#D32F2F</color>
+
 </resources>
+

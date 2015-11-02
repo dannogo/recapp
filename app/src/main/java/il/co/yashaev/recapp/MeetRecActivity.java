@@ -6,6 +6,7 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +17,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,6 +51,9 @@ public class MeetRecActivity extends AppCompatActivity {
     private boolean isNowPlaying = false;
     private ImageView playStop;
     private MediaPlayer   mediaPlayer = null;
+    private Handler handler = new Handler();
+    private SeekBar seekBar;
+    int currentPositionInMediaRecorded = 0;
 
     private ArrayList<String> titles = new ArrayList<>();
     private ArrayList<String> descriptions = new ArrayList<>();
@@ -63,6 +68,40 @@ public class MeetRecActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.meet_rec_activity);
 
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (mediaPlayer != null && fromUser){
+                    mediaPlayer.seekTo(progress);
+                    if (!isNowPlaying){
+                        currentPositionInMediaRecorded = progress;
+                    }
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (mediaPlayer != null) {
+                    seekBar.setMax(mediaPlayer.getDuration());
+                    int currentPosition = mediaPlayer.getCurrentPosition();
+                    seekBar.setProgress(currentPosition);
+                }
+                handler.postDelayed(this, 10);
+            }
+        });
+
         meetingList = (RecyclerView) findViewById(R.id.meetingList);
         recordList = (RecyclerView) findViewById(R.id.recordList);
         meetingList.addItemDecoration(new DividerItemDecoration(this, null, true, true));
@@ -75,10 +114,10 @@ public class MeetRecActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (!isNowPlaying) {
                     TextView idOfRecordInPlayer = (TextView) findViewById(R.id.idOfRecordInPlayer);
-                    String file = databaseAdapter.getRecordsFile(Integer.parseInt(idOfRecordInPlayer.getText().toString()));
-                    startPlaying(file);
+                    initializeMediaPlayer(Integer.parseInt(idOfRecordInPlayer.getText().toString()));
+                    startPlaying();
                 }else{
-                    stopPlaying();
+                    pausePlaying();
                 }
 
             }
@@ -183,28 +222,46 @@ public class MeetRecActivity extends AppCompatActivity {
         }
     }
 
-    private void startPlaying(String file) {
-        isNowPlaying = true;
+    // for beeing able to get position from seekbar before starting playing
+    protected void initializeMediaPlayer(int recordID){
+        String file = databaseAdapter.getRecordsFile(recordID);
         mediaPlayer = new MediaPlayer();
         try {
             mediaPlayer.setDataSource(file);
             mediaPlayer.prepare();
-            mediaPlayer.start();
-            playStop.setImageResource(R.drawable.pause);
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    stopPlaying();
-                }
-            });
         } catch (IOException e) {
-            Log.e("Player", "prepare() failed");
+            e.printStackTrace();
         }
     }
 
-    private void stopPlaying() {
-        mediaPlayer.release();
-        mediaPlayer = null;
+    private void startPlaying() {
+        isNowPlaying = true;
+
+        mediaPlayer.seekTo(currentPositionInMediaRecorded);
+        mediaPlayer.start();
+        playStop.setImageResource(R.drawable.pause);
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                stopPlaying();
+            }
+        });
+    }
+
+    protected void stopPlaying() {
+        currentPositionInMediaRecorded = 0;
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+        seekBar.setProgress(0);
+        playStop.setImageResource(R.drawable.play);
+        isNowPlaying = false;
+    }
+
+    private void pausePlaying(){
+        currentPositionInMediaRecorded = mediaPlayer.getCurrentPosition();
+        mediaPlayer.pause();
         playStop.setImageResource(R.drawable.play);
         isNowPlaying = false;
     }

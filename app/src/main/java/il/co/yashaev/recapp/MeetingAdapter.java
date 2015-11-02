@@ -163,6 +163,7 @@ public class MeetingAdapter extends RecyclerView.Adapter<MeetingAdapter.MeetingV
                 popup.show();
 
             }else {
+                ((MeetRecActivity)context).player.setVisibility(View.GONE);
                 checkedMeeting = getPosition();
                 ((MeetRecActivity) context).uncheckSpareItems();
                 itemView.setBackgroundColor(context.getResources().getColor(R.color.checkedItem));

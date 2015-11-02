@@ -239,6 +239,8 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                     }else{
                         idOfRecordInPlayer.setText(databaseID.getText());
                         ((MeetRecActivity)context).player.setVisibility(View.VISIBLE);
+                        ((MeetRecActivity)context).stopPlaying();
+                        ((MeetRecActivity)context).initializeMediaPlayer(Integer.parseInt(idOfRecordInPlayer.getText().toString()));
                     }
                 }else {
                     if (!((MeetRecActivity)context).isNowRecording) {

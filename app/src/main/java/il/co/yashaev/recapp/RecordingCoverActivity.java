@@ -40,7 +40,7 @@ public class RecordingCoverActivity extends AppCompatActivity {
         Intent intent = getIntent();
         recordID = intent.getStringExtra("recordID");
 
-        File folder = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + getResources().getString(R.string.app_name));
+        File folder = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/"+getResources().getString(R.string.app_name));
         if (!folder.exists()) {
             folder.mkdir();
         }
@@ -101,6 +101,7 @@ public class RecordingCoverActivity extends AppCompatActivity {
             recorder.prepare();
         } catch (IOException e) {
             Log.e("AudioRecord", "prepare() failed");
+            Log.e("AudioRecord", "" + e);
         }
 
         recorder.start();

@@ -5,6 +5,8 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -57,6 +59,10 @@ public class RemoveConfirmation extends DialogFragment {
                     ((MeetRecActivity)getActivity()).removeMeeting(itemID, position, isChecked);
                 }else if (purpose.equals("records")){
                     ((MeetRecActivity)getActivity()).removeRecord(itemID, position);
+                    TextView idOfRecordInPlayer = (TextView) ((MeetRecActivity) getActivity()).player.findViewById(R.id.idOfRecordInPlayer);
+                    if (idOfRecordInPlayer.getText().toString().equals(String.valueOf(itemID))){
+                        ((MeetRecActivity)getActivity()).player.setVisibility(View.GONE);
+                    }
                 }
 
             }
